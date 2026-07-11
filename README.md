@@ -38,8 +38,8 @@ This project follows an **Agile Scrum SDLC** with 11 iterative sprints, prioriti
 | 1 | High-Level Architecture Diagrams & Trade-offs | ✅ Complete |
 | 2 | Database Design & ER Modeling | ✅ Complete |
 | 3 | Backend Foundation (FastAPI, DI, Auth) | ✅ Complete |
-| 4 | Queue Management (REST APIs, Metrics) | ⏳ In Progress |
-| 5 | Job Scheduling (Immediate, Cron, Batch, DLQ) | 🗓️ Planned |
+| 4 | Queue Management (REST APIs, Metrics) | ✅ Complete |
+| 5 | Job Scheduling (Immediate, Cron, Batch, DLQ) | ⏳ In Progress |
 | 6 | Worker Service (Polling, Heartbeat, Recovery) | 🗓️ Planned |
 | 7 | Frontend Dashboard (React, Tailwind) | 🗓️ Planned |
 | 8 | Monitoring (Logs, Audits, Health) | 🗓️ Planned |

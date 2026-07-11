@@ -20,13 +20,29 @@ app.add_middleware(
 
 # Security Headers Middleware
 from fastapi import Request
+import uuid
+from app.core.logging import trace_id_var
+
 @app.middleware("http")
-async def add_security_headers(request: Request, call_next):
+async def correlation_id_middleware(request: Request, call_next):
+    # Extract trace ID from header or generate a new one
+    trace_id = request.headers.get("X-Trace-Id", str(uuid.uuid4()))
+    
+    # Bind to contextvar so structlog automatically picks it up
+    token = trace_id_var.set(trace_id)
+    
     response = await call_next(request)
+    
+    # Inject security headers and trace_id into response
+    response.headers["X-Trace-Id"] = trace_id
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Content-Security-Policy"] = "default-src 'self'"
+    
+    # Reset contextvar to prevent bleeding across requests (though ASGI isolates them)
+    trace_id_var.reset(token)
+    
     return response
 
 @app.get("/health")

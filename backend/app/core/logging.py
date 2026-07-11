@@ -1,6 +1,17 @@
 import structlog
 import logging
 import sys
+import contextvars
+
+# Global ContextVar for Trace ID
+trace_id_var = contextvars.ContextVar("trace_id", default=None)
+
+def inject_trace_id(logger, log_method, event_dict):
+    """Structlog processor to inject trace_id into every log."""
+    trace_id = trace_id_var.get()
+    if trace_id:
+        event_dict["trace_id"] = trace_id
+    return event_dict
 
 def setup_logging(json_logs: bool = False):
     """
@@ -13,6 +24,7 @@ def setup_logging(json_logs: bool = False):
         structlog.stdlib.add_log_level,
         structlog.stdlib.add_logger_name,
         timestamper,
+        inject_trace_id,
         structlog.processors.CallsiteParameterAdder(
             {
                 structlog.processors.CallsiteParameter.FILENAME,

@@ -96,6 +96,7 @@ class Job(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     queue_id = Column(GUID(), ForeignKey("queues.id", ondelete="CASCADE"), nullable=False)
     worker_id = Column(GUID(), ForeignKey("worker_nodes.id", ondelete="SET NULL"), nullable=True)
+    trace_id = Column(String(255), index=True, nullable=True)
     status = Column(String(50), nullable=False, default="queued", index=True)
     payload = Column(JSON, nullable=False, default=dict)
     result = Column(JSON, nullable=True)

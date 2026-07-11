@@ -35,6 +35,21 @@ services:
       - db
       - redis
 
+  worker:
+    build: 
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["python", "-m", "worker.main"]
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://admin:password123@db:5432/titan_db
+      - REDIS_URL=redis://redis:6379/0
+      - QUEUE_ID=00000000-0000-0000-0000-000000000000 # Dummy ID to prevent crashing before UI creates a real queue
+      - PYTHONPATH=/app
+    depends_on:
+      - db
+      - redis
+
 volumes:
   postgres_data:
   redis_data:

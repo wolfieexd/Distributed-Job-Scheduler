@@ -10,7 +10,7 @@ from app.services.job_service import JobService
 
 router = APIRouter()
 
-@router.post("/queues/{queue_id}/jobs", response_model=JobResponse, status_code=201)
+@router.post("/queues/{queue_id}/jobs", response_model=JobResponse, status_code=201, summary="Submit a new Job", description="Atomically writes a job to PostgreSQL and pushes it onto the Redis queue for execution.")
 async def submit_job(
     queue_id: uuid.UUID,
     job_in: JobCreate,
@@ -19,7 +19,7 @@ async def submit_job(
 ):
     return await JobService.create_job(db, redis_client, queue_id, job_in)
 
-@router.get("/jobs/{job_id}", response_model=JobResponse)
+@router.get("/jobs/{job_id}", response_model=JobResponse, summary="Retrieve a Job by ID", description="Fetches the current status and metadata of a specific job.")
 async def read_job(
     job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db)

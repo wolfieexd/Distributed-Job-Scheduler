@@ -42,6 +42,56 @@ Built with an architecture inspired by Celery, Temporal, and BullMQ, this system
 
 ---
 
+## 🏛️ High-Level Architecture
+
+```mermaid
+flowchart TD
+    %% Clients
+    Client((Client App))
+    Dashboard((React Dashboard))
+    
+    %% API Gateway
+    subgraph API Layer
+        FastAPI[FastAPI Gateway\n- JWT/API Key Auth\n- ContextVar Trace ID]
+    end
+    
+    %% Storage & Queues
+    subgraph Dual-Write Persistence
+        Postgres[(PostgreSQL 15)\n- Source of Truth\n- Audit Logs]
+        Redis[(Redis 7.0)\n- Immediate/Delayed Queues\n- Pub/Sub]
+    end
+    
+    %% Workers
+    subgraph Execution Layer
+        Worker1[Worker Node 1\n- Asyncio\n- Heartbeats]
+        Worker2[Worker Node 2\n- Asyncio\n- Heartbeats]
+    end
+
+    %% Flow
+    Client -- "1. POST /jobs (JSON)" --> FastAPI
+    Dashboard -- "GET /metrics" --> FastAPI
+    
+    FastAPI -- "2a. Save Job & Audit (Atomic)" --> Postgres
+    FastAPI -- "2b. Push Payload & Trace ID" --> Redis
+    
+    Redis -- "3. BLPOP (Pull Job)" --> Worker1
+    Redis -- "3. BLPOP (Pull Job)" --> Worker2
+    
+    Worker1 -- "4. Update Status (Complete/Fail)" --> Postgres
+    Worker2 -- "4. Update Status (Complete/Fail)" --> Postgres
+    
+    %% Styling
+    classDef storage fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#fff
+    classDef compute fill:#0f172a,stroke:#10b981,stroke-width:2px,color:#fff
+    classDef client fill:#334155,stroke:#94a3b8,stroke-width:2px,color:#fff
+    
+    class Postgres,Redis storage
+    class FastAPI,Worker1,Worker2 compute
+    class Client,Dashboard client
+```
+
+---
+
 ## 🛠️ Technology Stack
 - **Backend**: FastAPI (Python 3.11), SQLAlchemy 2.0 (Async), Pydantic V2
 - **Database**: PostgreSQL 15 (Persistent Storage & Audit)

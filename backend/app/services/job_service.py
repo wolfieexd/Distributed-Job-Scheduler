@@ -4,17 +4,22 @@ from fastapi import HTTPException
 from redis.asyncio import Redis
 import uuid
 import json
-from datetime import timezone
+from datetime import timezone, datetime
 
-from app.db.models import Job, Queue
+from app.db.models import Job, Queue, JobEvent
 from app.schemas.job import JobCreate
+from app.core.logging import setup_logging
+
+logger = setup_logging()
 
 class JobService:
     @staticmethod
     async def create_job(db: AsyncSession, redis_client: Redis, queue_id: uuid.UUID, job_in: JobCreate) -> Job:
+        logger.info("creating_job", queue_id=str(queue_id))
         # 1. Verify queue exists
         queue = await db.execute(select(Queue).where(Queue.id == queue_id))
         if not queue.scalar_one_or_none():
+            logger.error("queue_not_found", queue_id=str(queue_id))
             raise HTTPException(status_code=404, detail="Queue not found")
 
         # 2. Dual Write: Save to Postgres FIRST (Source of truth)
@@ -26,6 +31,16 @@ class JobService:
             status="queued"
         )
         db.add(db_job)
+        
+        # Add Audit Event
+        job_event = JobEvent(
+            job_id=db_job.id, # Note: id may be generated on commit, but sqlalchemy provides it immediately if using uuid default
+            previous_status=None,
+            new_status="queued",
+            message="Job initially enqueued"
+        )
+        db.add(job_event)
+        
         await db.commit()
         await db.refresh(db_job)
 

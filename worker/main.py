@@ -11,25 +11,32 @@ import redis.asyncio as redis
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.future import select
 
-from app.db.models import Job, WorkerNode
+from app.db.models import Job, WorkerNode, JobEvent
 from worker.core.config import settings
+from app.core.logging import setup_logging
+
+logger = setup_logging()
 
 engine = create_async_engine(settings.DATABASE_URL, echo=False, future=True)
 AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
 
 async def process_job(job_id: str, worker_id: uuid.UUID):
-    print(f"[{settings.WORKER_HOSTNAME}] Processing job {job_id}")
+    logger.info("processing_job_started", job_id=job_id, worker_id=str(worker_id))
     async with AsyncSessionLocal() as db:
         # Mark as processing in Postgres
         result = await db.execute(select(Job).where(Job.id == uuid.UUID(job_id)))
         job = result.scalar_one_or_none()
         
         if not job:
+            logger.error("job_not_found_in_db", job_id=job_id)
             return
             
+        previous_status = job.status
         job.status = "processing"
         job.worker_id = worker_id
+        
+        db.add(JobEvent(job_id=job.id, previous_status=previous_status, new_status="processing", message="Worker claimed job"))
         await db.commit()
         
         try:
@@ -39,13 +46,18 @@ async def process_job(job_id: str, worker_id: uuid.UUID):
             # Mark as completed
             job.status = "completed"
             job.result = {"status": "success", "message": "Simulated heavy computation"}
+            db.add(JobEvent(job_id=job.id, previous_status="processing", new_status="completed", message="Job finished successfully"))
+            logger.info("job_completed", job_id=job_id)
         except Exception as e:
+            logger.error("job_failed", job_id=job_id, error=str(e))
             job.retry_count += 1
             if job.retry_count >= job.max_retries:
                 job.status = "failed"
                 job.error = str(e)
+                db.add(JobEvent(job_id=job.id, previous_status="processing", new_status="failed", message=f"Max retries reached: {str(e)}"))
             else:
                 job.status = "queued"
+                db.add(JobEvent(job_id=job.id, previous_status="processing", new_status="queued", message=f"Retry {job.retry_count} scheduled"))
                 # Requeue logic would go here
         finally:
             await db.commit()

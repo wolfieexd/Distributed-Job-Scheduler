@@ -70,3 +70,12 @@ class Job(Base):
     updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
     
     queue = relationship("Queue", back_populates="jobs")
+
+class JobEvent(Base):
+    __tablename__ = "job_events"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    job_id = Column(UUID(as_uuid=True), ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False, index=True)
+    previous_status = Column(String, nullable=True)
+    new_status = Column(String, nullable=False)
+    message = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)

@@ -47,24 +47,24 @@ Built with an architecture inspired by Celery, Temporal, and BullMQ, this system
 ```mermaid
 flowchart TD
     %% Clients
-    Client((Client App))
-    Dashboard((React Dashboard))
+    Client(("Client App"))
+    Dashboard(("React Dashboard"))
     
     %% API Gateway
     subgraph API Layer
-        FastAPI[FastAPI Gateway\n- JWT/API Key Auth\n- ContextVar Trace ID]
+        FastAPI["FastAPI Gateway<br>- JWT/API Key Auth<br>- ContextVar Trace ID"]
     end
     
     %% Storage & Queues
     subgraph Dual-Write Persistence
-        Postgres[(PostgreSQL 15)\n- Source of Truth\n- Audit Logs]
-        Redis[(Redis 7.0)\n- Immediate/Delayed Queues\n- Pub/Sub]
+        Postgres[("PostgreSQL 15<br>- Source of Truth<br>- Audit Logs")]
+        Redis[("Redis 7.0<br>- Immediate/Delayed Queues<br>- Pub/Sub")]
     end
     
     %% Workers
     subgraph Execution Layer
-        Worker1[Worker Node 1\n- Asyncio\n- Heartbeats]
-        Worker2[Worker Node 2\n- Asyncio\n- Heartbeats]
+        Worker1["Worker Node 1<br>- Asyncio<br>- Heartbeats"]
+        Worker2["Worker Node 2<br>- Asyncio<br>- Heartbeats"]
     end
 
     %% Flow

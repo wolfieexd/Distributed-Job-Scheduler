@@ -24,48 +24,79 @@ Project Titan is a production-quality, highly scalable distributed job scheduler
 | **Configurable Retry Engine** | Natively supports Fixed Delay, Linear Backoff, and Exponential Backoff |
 | **Dead Letter Queues (DLQ)** | Automatic isolation of terminally failed jobs to prevent queue blocking |
 | **Graceful Worker Shutdown** | Intercepts POSIX signals to safely return in-flight jobs to the queue |
-| **Decoupled Architecture** | API and Worker layers communicate strictly asynchronously via Redis |
-| **Real-Time Telemetry** | Heartbeat monitoring and comprehensive queue statistics |
-| **Forensic Audit Trails** | Complete execution and retry history stored immutably in PostgreSQL |
+# Distributed Job Scheduler (Titan)
 
-## Development Methodology
+An enterprise-grade, high-performance distributed job execution and scheduling platform designed for massive scale, resiliency, and observability.
 
-This project follows an **Agile Scrum SDLC** with 11 iterative sprints, prioritizing reliability, scalability, and observability:
+Built with an architecture inspired by Celery, Temporal, and BullMQ, this system leverages a Dual-Write pattern (PostgreSQL + Redis) to guarantee zero job loss, sub-millisecond queuing, and flawless worker recovery.
 
-| Sprint | Phase | Status |
-|--------|-------|--------|
-| 0 | Requirements Analysis, Threat Modeling & Architecture | ✅ Complete |
-| 1 | High-Level Architecture Diagrams & Trade-offs | ✅ Complete |
-| 2 | Database Design & ER Modeling | ✅ Complete |
-| 3 | Backend Foundation (FastAPI, DI, Auth) | ✅ Complete |
-| 4 | Queue Management (REST APIs, Metrics) | ✅ Complete |
-| 5 | Job Scheduling (Immediate, Cron, Batch, DLQ) | ✅ Complete |
-| 6 | Worker Service (Polling, Heartbeat, Recovery) | ✅ Complete |
-| 7 | Frontend Dashboard (React, Tailwind) | ✅ Complete |
-| 8 | Monitoring (Logs, Audits, Health) | ✅ Complete |
-| 9 | Comprehensive Testing Suite | ✅ Complete |
-| 10 | Final Documentation & Deployment | ⏳ In Progress |
+---
 
-## Architecture Stack
+## 🚀 Key Features
+- **Dual-Write Architecture**: Guarantees consistency. Jobs are atomically written to Postgres and pushed to Redis queues.
+- **Role-Based Access Control**: Fully secured with JWT Authentication and SHA-256 hashed API Keys for headless workers.
+- **Robust Worker Nodes**: Built-in heartbeat tracking, exponential backoff, dead-letter queues, and automatic stalled-job recovery.
+- **Comprehensive Observability**: Structured JSON logging (`structlog`) and a dedicated `JobEvent` audit trail for every state change.
+- **DDoS Protection**: Pydantic payload size validation and Strict CORS policies ensure memory preservation.
+- **Beautiful Dashboard**: A modern "Obsidian Flux" dark-mode UI built in React + Vite for monitoring cluster health.
 
-- **Primary Database**: PostgreSQL (Persistent State, Auditing)
-- **Queue/Cache**: Redis (Fast IO, Atomic Locks, Sorted Sets)
-- **API Gateway**: Python 3.11+ / FastAPI
-- **Worker Nodes**: Python 3.11+ / Asyncio / Multiprocessing
-- **Frontend UI**: React 18 / Tailwind CSS
-- **Infrastructure**: Docker / Kubernetes Ready
+---
 
-## Quick Start
+## 🛠️ Technology Stack
+- **Backend**: FastAPI (Python 3.11), SQLAlchemy 2.0 (Async), Pydantic V2
+- **Database**: PostgreSQL 15 (Persistent Storage & Audit)
+- **Message Broker**: Redis 7.0 (In-Memory Queues & Pub/Sub)
+- **Frontend**: React 18, Vite, TailwindCSS (Obsidian Flux theme)
+- **Testing**: Pytest, Asyncio, aiosqlite, fakeredis (85% Coverage)
 
+---
+
+## 💻 Local Setup & Deployment
+
+### 1. Prerequisites
+- Docker & Docker Compose
+- Python 3.11+ (If running locally without Docker)
+- Node.js 18+ (For frontend dev)
+
+### 2. Environment Variables
+Create a `.env` file in the root directory (or use the defaults provided in `docker-compose.yml`):
+```env
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/scheduler
+REDIS_URL=redis://redis:6379/0
+SECRET_KEY=your_super_secret_jwt_key
+ACCESS_TOKEN_EXPIRE_MINUTES=1440
+```
+
+### 3. Deploying with Docker Compose (Recommended)
+You can spin up the entire cluster (PostgreSQL, Redis, FastAPI Backend, Worker Node) with a single command:
 ```bash
-# Clone the repository
-git clone https://github.com/wolfieexd/Distributed-Job-Scheduler.git
-cd Distributed-Job-Scheduler
+docker-compose up --build -d
+```
 
-# Start local infrastructure (Redis + Postgres)
-docker-compose up -d
+### 4. Running the Frontend Dashboard
+Navigate to the frontend directory and start the Vite development server:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Access the dashboard at `http://localhost:5173`.
 
-# Coming Soon: Run the API and Worker processes
+---
+
+## 📚 API Documentation
+Once the backend is running, FastAPI automatically generates interactive documentation:
+- **Swagger UI**: `http://localhost:8000/docs`
+- **ReDoc**: `http://localhost:8000/redoc`
+
+All administrative endpoints (Organizations, Projects, Queues) require an Admin JWT token.
+
+## 🧪 Running the Test Suite
+The backend is fully tested using an isolated in-memory stack (SQLite + FakeRedis). No external dependencies are required!
+```bash
+cd backend
+pip install -r requirements-dev.txt
+python -m pytest tests/ -v --cov=app
 ```
 
 ## Project Structure

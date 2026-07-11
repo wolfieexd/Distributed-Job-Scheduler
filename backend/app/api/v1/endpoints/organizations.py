@@ -6,8 +6,9 @@ import uuid
 from app.db.session import get_db
 from app.schemas.organization import OrganizationCreate, OrganizationResponse
 from app.services.organization_service import OrganizationService
+from app.api.deps import get_admin_user
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_admin_user)])
 
 @router.post("/", response_model=OrganizationResponse, status_code=201)
 async def create_organization(

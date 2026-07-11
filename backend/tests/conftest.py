@@ -36,6 +36,12 @@ async def redis_client():
     yield client
     await client.flushall()
 
+from app.api.deps import get_admin_user, get_current_user
+from app.db.models import User
+
+async def override_get_admin_user():
+    return User(id=uuid4(), email="admin@test.com", role="admin")
+
 @pytest_asyncio.fixture(scope="function")
 async def client(db_session, redis_client):
     async def override_get_db():
@@ -46,6 +52,8 @@ async def client(db_session, redis_client):
 
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_redis] = override_get_redis
+    app.dependency_overrides[get_admin_user] = override_get_admin_user
+    app.dependency_overrides[get_current_user] = override_get_admin_user
     
     async with AsyncClient(app=app, base_url="http://test") as ac:
         yield ac

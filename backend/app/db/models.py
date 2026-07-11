@@ -24,6 +24,24 @@ class GUID(TypeDecorator):
         if value is None: return value
         else: return uuid.UUID(value) if not isinstance(value, uuid.UUID) else value
 
+class User(Base):
+    __tablename__ = "users"
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    hashed_password = Column(String(255), nullable=False)
+    role = Column(String(50), default="developer", nullable=False) # 'admin' or 'developer'
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+
+class ApiKey(Base):
+    __tablename__ = "api_keys"
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    key_hash = Column(String(255), unique=True, index=True, nullable=False)
+    organization_id = Column(GUID(), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    name = Column(String(255), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+    
+    organization = relationship("Organization", back_populates="api_keys")
+
 class Organization(Base):
     __tablename__ = "organizations"
     
@@ -33,6 +51,7 @@ class Organization(Base):
     updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
     
     projects = relationship("Project", back_populates="organization", cascade="all, delete-orphan")
+    api_keys = relationship("ApiKey", back_populates="organization", cascade="all, delete-orphan")
 
 class Project(Base):
     __tablename__ = "projects"

@@ -6,8 +6,9 @@ import uuid
 from app.db.session import get_db
 from app.schemas.queue import QueueCreate, QueueResponse
 from app.services.queue_service import QueueService
+from app.api.deps import get_admin_user
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_admin_user)])
 
 @router.post("/", response_model=QueueResponse, status_code=201)
 async def create_queue(

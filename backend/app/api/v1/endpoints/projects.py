@@ -7,8 +7,9 @@ from app.db.session import get_db
 from app.schemas.project import ProjectCreate, ProjectResponse
 from app.services.project_service import ProjectService
 from app.services.organization_service import OrganizationService
+from app.api.deps import get_admin_user
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_admin_user)])
 
 @router.post("/", response_model=ProjectResponse, status_code=201)
 async def create_project(

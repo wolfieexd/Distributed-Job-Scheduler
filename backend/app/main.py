@@ -22,5 +22,6 @@ app.add_middleware(
 async def health_check():
     return {"status": "ok", "service": "titan-api"}
 
-# TODO: Include API routers in Sprint 4
-# app.include_router(api_router, prefix=settings.API_V1_STR)
+from app.api.v1.router import api_router
+
+app.include_router(api_router, prefix=settings.API_V1_STR)

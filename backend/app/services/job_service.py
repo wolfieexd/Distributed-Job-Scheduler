@@ -31,6 +31,7 @@ class JobService:
             status="queued"
         )
         db.add(db_job)
+        await db.flush()
         
         # Add Audit Event
         job_event = JobEvent(
